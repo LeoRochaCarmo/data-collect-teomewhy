@@ -1,6 +1,7 @@
 #%%
 import requests
 from bs4 import BeautifulSoup
+from tqdm import tqdm
 
 #%%
 
@@ -39,7 +40,7 @@ def get_basic_infos(soup):
     ems = paragrafo.find_all('em')
     data = {}
     for em in ems:
-        chave, valor = em.text.split(':')
+        chave, valor, *_ = em.text.split(':')
         chave = chave.strip(' ')
         data[chave] = valor.strip(' ')
     return data
@@ -66,16 +67,67 @@ def get_personagem_infos(url):
         data['Aparicoes'] = get_aparicoes(soup)
         return data
     
-#%%
-url = 'https://www.residentevildatabase.com/personagens/ada-wong/'
-get_personagem_infos(url)
+def get_links():
+    url = 'https://www.residentevildatabase.com/personagens/'
+    response = requests.get(url, headers=headers, cookies=cookies)
+    soup_personagens = BeautifulSoup(response.text)
+    ancoras = (soup_personagens.find('div', class_ = 'td-page-content')
+                     .find_all('a'))
+    links = [i['href'] for i in ancoras]
+    return links
 
 #%%
 
-url = 'https://www.residentevildatabase.com/personagens/'
+links = get_links()
+data = []
+for link in tqdm(links[:5]):
+    d = get_personagem_infos(link)
+    d['Link'] = link
+    data.append(d)
+
+data
+
+#%%
+
+# url = 'https://www.residentevildatabase.com/personagens/ark-thompson/'
+url = 'https://www.residentevildatabase.com/personagens/andre-strickland/'
+
 response = requests.get(url, headers=headers, cookies=cookies)
-soup_personagens = BeautifulSoup(response.text)
-soup_personagens
+soup = BeautifulSoup(response.text)
+div_page = soup.find('div', class_='td-page-content')
+paragrafo = div_page.find_all('p')[1]
+ems = paragrafo.find_all('em')
+data = {}
+
+if len(ems) == 4:
+    for em in ems:
+        chave, valor, *_ = em.text.split(':')
+        chave = chave.strip(' ')
+        data[chave] = valor.strip(' ')
+else:
+    pass
 
 
-    
+#%%
+    url = 'https://www.residentevildatabase.com/personagens/ark-thompson/'
+# url = 'https://www.residentevildatabase.com/personagens/andre-strickland/'
+
+response = requests.get(url, headers=headers, cookies=cookies)
+soup = BeautifulSoup(response.text)
+div_page = soup.find('div', class_='td-page-content')
+paragrafo = div_page.find_all('p')[1]
+ems = paragrafo.find_all('em')
+data = {}
+
+em = ems[0]
+for i in em.decode_contents().split('<br/>'):
+    chave, valor = i.split(':')
+    valor = valor.strip(' ')
+    if chave.startswith('\n'):
+        chave = chave.strip('\n')
+    else:
+        chave
+    data[chave] = valor
+data
+
+
