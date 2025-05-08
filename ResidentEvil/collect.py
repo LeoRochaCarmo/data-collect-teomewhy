@@ -2,6 +2,7 @@
 import requests
 from bs4 import BeautifulSoup
 from tqdm import tqdm
+import pandas as pd
 
 #%%
 
@@ -106,6 +107,7 @@ for link in tqdm(links):
     try:
         d = get_personagem_infos(link)
         d['Link'] = link
+        d['Nome'] = link.strip('/').split('/')[-1].replace('-', ' ').title()
         data.append(d)
     except Exception as e:
         print(e)
@@ -113,3 +115,16 @@ for link in tqdm(links):
 
 falhas
 #%%
+
+df = pd.DataFrame(data)
+df[~df['de nascimento'].isna()]
+
+#%%
+
+df.to_parquet('dados_re.parquet', index=False)
+
+#%%
+
+df.to_pickle('dados_re.pkl')
+
+
